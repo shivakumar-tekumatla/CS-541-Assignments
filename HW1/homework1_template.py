@@ -23,13 +23,20 @@ def problem_1g (A, c, d):
     return np.mean(A[np.nonzero((A >= c) & (A <= d))])
 
 def problem_1h (A, k):
-    return ...
+    w,v = np.linalg.eig(A) #get eigen vectors 
+    s = np.argpartition(np.abs(w), len(w) - k)[-k:] #get the top k abs indices 
+    return v[:,s]
 
 def problem_1i (x, k, m, s):
-    return ...
+    z = np.ones((x.shape[0],1))
+    mean = x+m*z
+    I = np.eye(x.shape[0])
+    covar = s*I 
+    return np.random.multivariate_normal(mean.T[0],covar,size=k).T
 
 def problem_1j (A):
-    return ...
+    # Referred from https://stackoverflow.com/a/35647011/5658788
+    return np.take(A,np.random.permutation(A.shape[0]),axis=1,out=A) 
 
 def problem_1k (x):
     return (x-x.mean())/x.std()
@@ -38,10 +45,14 @@ def problem_1l (x, k):
     return np.repeat(x,k,axis=1)
 
 def problem_1m (X, Y):
-    return ...
+    #Referred from https://sparrow.dev/pairwise-distance-in-numpy/
+    return np.linalg.norm(X.T[:, None, :] - Y.T[None, :, :], axis=-1,ord=2)
 
 def problem_1n (matrices):
-    return ...
+    # For a matrix multiplication of order (𝑚×𝑛) and (𝑛×𝑝)
+    # No of multiplications involved are =𝑚⋅𝑛⋅𝑝.
+    shapes = np.array(list(map(np.shape,matrices)))
+    return shapes[0][0]*np.prod(shapes[:,1])
 
 def linear_regression (X_tr, y_tr):
     X = X_tr.T 
