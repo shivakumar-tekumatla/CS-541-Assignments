@@ -76,15 +76,16 @@ def plot(y,y_hat,label="Training"):
 
 def train_age_regressor ():
     # Load data
-    X_tr = np.reshape(np.load("age_regression_Xtr.npy"), (-1, 48*48))
-    ytr = np.load("age_regression_ytr.npy")
-    X_te = np.reshape(np.load("age_regression_Xte.npy"), (-1, 48*48))
-    yte = np.load("age_regression_yte.npy")
+    X_tr = np.reshape(np.load("Data/age_regression_Xtr.npy"), (-1, 48*48))
+    ytr = np.load("Data/age_regression_ytr.npy")
+    X_te = np.reshape(np.load("Data/age_regression_Xte.npy"), (-1, 48*48))
+    yte = np.load("Data/age_regression_yte.npy")
     # Adding bias term for all the train and test data sets 
     X_tr = add_bias(X_tr)
     X_te = add_bias(X_te) 
     W = linear_regression(X_tr, ytr)
     ytr_hat = X_tr@W
+    # print(ytr,ytr_hat)
     yte_hat = X_te@W 
     plot(ytr,ytr_hat,label = "Training")
     plot(yte,yte_hat,label = "Testing")
