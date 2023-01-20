@@ -28,11 +28,13 @@ def problem_1h (A, k):
     return v[:,s]
 
 def problem_1i (x, k, m, s):
-    z = np.ones((x.shape[0],1))
+    n = x.shape[0]
+    z = np.ones((n,1))
     mean = x+m*z
-    I = np.eye(x.shape[0])
+    # print(mean.T[0])
+    I = np.eye(n)
     covar = s*I 
-    return np.random.multivariate_normal(mean.T[0],covar,size=k).T
+    return np.random.multivariate_normal(mean.T[0],covar,size=k)#.T
 
 def problem_1j (A):
     # Referred from https://stackoverflow.com/a/35647011/5658788
@@ -55,9 +57,9 @@ def problem_1n (matrices):
     return shapes[0][0]*np.prod(shapes[:,1])
 
 def linear_regression (X_tr, y_tr):
-    X = X_tr.T 
+    X = X_tr.T  # 2305 X 5000 
     y = np.expand_dims(y_tr, axis=1) # transposing y 
-    return (np.linalg.inv(X@X.T))@X@y 
+    return (np.linalg.inv(X@X.T))@X@y  #2305 X1  
 def fMSE(X,y,W):
     y = np.expand_dims(y, axis=1)
     return np.sum((X@W-y)**2)/(2*X.shape[0])  #np.sum((X@W- y)**2)/(2*X.shape[0])
@@ -76,12 +78,13 @@ def plot(y,y_hat,label="Training"):
 
 def train_age_regressor ():
     # Load data
-    X_tr = np.reshape(np.load("Data/age_regression_Xtr.npy"), (-1, 48*48))
-    ytr = np.load("Data/age_regression_ytr.npy")
+    X_tr = np.reshape(np.load("Data/age_regression_Xtr.npy"), (-1, 48*48)) #5000X2304 
+    # print(X_tr.shape)
+    ytr = np.load("Data/age_regression_ytr.npy") #5000 X 1 
     X_te = np.reshape(np.load("Data/age_regression_Xte.npy"), (-1, 48*48))
     yte = np.load("Data/age_regression_yte.npy")
     # Adding bias term for all the train and test data sets 
-    X_tr = add_bias(X_tr)
+    X_tr = add_bias(X_tr) # 5000 X 2305 
     X_te = add_bias(X_te) 
     W = linear_regression(X_tr, ytr)
     ytr_hat = X_tr@W
