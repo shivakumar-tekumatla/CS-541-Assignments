@@ -1,11 +1,12 @@
 import numpy as np 
 class SGD:
-    def __init__(self,X_tr,ytr,X_te,yte,n=[100,200,300],epsilon=[0.000001,0.000001,0.00000001],epochs=[2,3,4,5],alpha=[1,2,3,4]) -> None:
+    def __init__(self,X_tr,ytr,X_te,yte,n=[100,200,300],epsilon=[0.1,0.01,0.001,0.000001,0.000001,0.00000001],epochs=[1,2,3,4,5],alpha=[0.01,0.1,1,2,3,4],validation_split =0.8) -> None:
         self.X_tr = self.add_bias(X_tr).T #adding bias to training labels , and transposing to reflect the theory
         self.ytr = np.expand_dims(ytr, axis=1)
         self.X_te = self.add_bias(X_te).T #adding bias to testing labels , and transposing to reflect the theory
         self.yte = np.expand_dims(yte, axis=1)
         self.H = np.array(np.meshgrid(n,epsilon,epochs,alpha)).T.reshape(-1,4) #creating combination of all the hyper parameters 
+        self.validation_split = validation_split
         pass
     def add_bias(self,X):
         #adding a bias term for the Train and test labels 
@@ -31,35 +32,35 @@ class SGD:
         return (X@(X.T@w-y)  + (alpha*w) /n)
 
     def fMSE(self,X,y,w,alpha):
-        reg = alpha*w.T@w
-        # print(reg)
-        # input()
-        return (np.sum((X.T@w-y)**2)+alpha*w.T@w)/(2*X.shape[0])
+        reg = alpha*w.T@w -alpha #no regularization for bias 
+        return (np.sum((X.T@w-y)**2)+reg)/(2*X.shape[0])
 
-
-        # return alpha*w
+    def train_batch(self,X,y,w,alpha,epsilon,n,n_):
+        # Split the batch 
+        X = X[:,n_:n+n_]
+        y = y[n_:n+n_]
+        # Compute gradient on this batch 
+        gradient = self.gradient(X,y,w,alpha)
+        # Update weights 
+        w =  w - epsilon*gradient 
+        # Increment the batch start point 
+        n_+=n
+        return w, n_
     def stochastic_gradient_descent(self):
-        X_tr,ytr,X_va,yva = self.split_train_validation(0.8) # Split 80% 
+        X_tr,ytr,X_va,yva = self.split_train_validation(self.validation_split) # Split train to train and validation  
         # print(self.H)
         h_star =self.H[np.random.choice(len(self.H))] # Initially taking a random hyper parameter set as the best one 
         err = np.inf #initial error  
         for h in self.H: # for each hyper parameter set 
             n,epsilon,epochs ,alpha =h
             print(f'Using hyper parameters Batch Size = {n}, Epsilon = {epsilon}, epochs = {epochs}, alpha = {alpha}')
-            w = np.zeros((self.X_tr.shape[0],1))#np.random.uniform( size=(self.X_tr.shape[0],1))#initialize the weights with bias term 
+            w = np.random.uniform( size=(self.X_tr.shape[0],1))#initialize the weights with bias term  #np.zeros((self.X_tr.shape[0],1))#
             n = int(n) 
             epochs = int(epochs) 
             for epoch in range(epochs):
                 n_ = 0 
                 while n_ < len(ytr):
-                    X = X_tr[:,n_:n+n_]
-                    y = ytr[n_:n+n_]
-                    # Compute gradient on this batch 
-                    gradient = self.gradient(X,y,w,alpha)
-                    #Update weights 
-                    w = w - epsilon*gradient 
-                    # print(w)
-                    n_+=n
+                    w,n_ = self.train_batch(X_tr,ytr,w,alpha,epsilon,n,n_) #Train on the batch
             # test on validation data set 
             curr_err = self.fMSE(X_va,yva,w,alpha)
             print("Error: ", curr_err) #, h)
@@ -77,16 +78,8 @@ class SGD:
         for epoch in range(int(epochs)):
             # print(f"Epoch number {epoch}")
             n_ = 0 
-            while n_ < len(ytr):
-                X = X_tr[:,n_:n+n_]
-                y = ytr[n_:n+n_]
-                # Compute gradient on this batch 
-                gradient = self.gradient(X,y,w,alpha)
-                #Update weights 
-                w = w - epsilon*gradient 
-                # print(w)
-                n_+=n
-        
+            while n_ < len(self.ytr):
+                w,n_ = self.train_batch(self.X_tr,self.ytr,w,alpha,epsilon,n,n_)        
         train_err = self.fMSE(self.X_tr,self.ytr,w,alpha)
         test_err = self.fMSE(self.X_te,self.yte,w,alpha)
         return w,train_err , test_err , h_star 
@@ -98,12 +91,10 @@ def main():
     ytr = np.load("../../HW1/Data/age_regression_ytr.npy") #5000 X 1 
     X_te = np.reshape(np.load("../../HW1/Data/age_regression_Xte.npy"), (-1, 48*48))
     yte = np.load("../../HW1/Data/age_regression_yte.npy")
-    
-    
-    learning_rates = []
-    epochs = []
-    regularization = []
-    batch_size = []
+    # learning_rates = []
+    # epochs = []
+    # regularization = []
+    # batch_size = []
     sgd =  SGD(X_tr,ytr,X_te,yte)
     model,train_err,test_err,hyper_parameters= sgd.stochastic_gradient_descent()
 
