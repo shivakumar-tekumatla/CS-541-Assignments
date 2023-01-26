@@ -35,7 +35,7 @@ def doDoubleCrossValidation (D, k, H):
         # Get all the other indexes
         trainIdxs = idxs[list(set(allIdxs) - set(testIdxs)),:].flatten()
         for h in H:
-            new_acc = doCrossValidation (D[trainIdxs], k-1, h)
+            new_acc = doCrossValidation (D[trainIdxs], k, h)
             if  new_acc > acc:
                 acc =  new_acc 
                 h_star = h 
