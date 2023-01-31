@@ -1,6 +1,6 @@
 import numpy as np 
 class SGD:
-    def __init__(self,X_tr,ytr,X_te,yte,n=[100,200,300],epsilon=[0.1,0.01,0.001,0.000001,0.000001,0.00000001],epochs=[10,20,30,40,50],alpha=[0.01,0.1,1,2,3,4],validation_split =0.8) -> None:
+    def __init__(self,X_tr,ytr,X_te,yte,n=[10,100,200,300],epsilon=[0.1,0.01,0.000001,0.000001,0.00000001],epochs=[2,3,4,5],alpha=[1,2,3,4],validation_split =0.8) -> None:
         self.X_tr = self.add_bias(X_tr).T #adding bias to training labels , and transposing to reflect the theory
         self.ytr = np.expand_dims(ytr, axis=1)
         self.X_te = self.add_bias(X_te).T #adding bias to testing labels , and transposing to reflect the theory
