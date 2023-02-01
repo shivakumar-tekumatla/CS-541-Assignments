@@ -23,6 +23,18 @@ class SMR:
         for i,val in enumerate(y):
             out[i][val]=1 #set a corresponding class index to 1 
         return out 
+    def split_train_validation(self,split):
+        # Randomize the train data 
+        allIdxs = np.arange(self.X_tr.shape[1]) 
+        Idxs = np.random.permutation(allIdxs) #random indices for the train data 
+        # select the 1st split  of the indices for thr train data and rest for validation 
+        train_part = Idxs[:int(len(Idxs)*split)]
+        validation_part = Idxs[int(len(Idxs)*split):]
+        X_tr = self.X_tr[:,train_part]
+        ytr = self.ytr[train_part]
+        X_va = self.X_tr[:,validation_part]
+        yva = self.ytr[validation_part]
+        return X_tr,ytr,X_va,yva  
 
     def softmax(self,z):
         exp = np.exp(z) 
