@@ -27,15 +27,22 @@ class SMR:
     def softmax(self,z):
         exp = np.exp(z) 
         return exp /np.sum(exp)
-
-    def gradient(self,X,y,w):
+    def predict(self,X,y,w):
         z = X.T@w 
-        y_tilde = self.softmax(z) 
+        y_tilde = self.softmax(z)
+        return y_tilde
+    def gradient(self,X,y,w,alpha):
+        alpha = np.full(w.shape,alpha)  # generating alpha same as weights shape 
+        alpha[-1,:] = 0 #set all the bias reg to zero 
+        y_tilde = self.predict(X,y,w)
         n = y.shape[0]
-        return (1/n)*X@(y_tilde-y)
-    def CE_loss(self,y_tilde,y):
+        return (1/n)*X@(y_tilde-y) + alpha*w 
+    def CE_loss(self,X,y,w,alpha):
         # log = np.log(y_tilde)
-        return -np.sum(y*np.log(y_tilde))
+        reg = 0.5*alpha*(w.T@w)- self.c*alpha #not regularizing the bias 
+        n = y.shape[0]
+        y_tilde = self.predict(X,y,w)
+        return -(1/n)*np.sum(y*np.log(y_tilde)) +reg
 
 def main():
     X_tr = np.reshape(np.load("Data/fashion_mnist_train_images.npy"), (-1, 28*28)) 
