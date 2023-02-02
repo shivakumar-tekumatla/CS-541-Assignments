@@ -2,16 +2,17 @@ import numpy as np
 import pickle 
 class SMR:
     def __init__(self,X_tr,ytr,X_te,yte,c =10,n=[1000,2000,4000],epsilon=[0.01,0.1,0.1,0.2],epochs=[2,4,6],alpha=[1,5,10,20],validation_split =0.8) -> None:
-        self.c = c #classification 
-        self.X_tr = self.add_bias(X_tr).T /255 #adding bias to training labels , and transposing to reflect the theory. Normaling pixels 
+        self.c = c #c classes  
+        X_tr = X_tr/255 # Normalizing pixels 
+        X_te = X_te/255  #Normalizing pixels 
+        
+        self.X_tr = self.add_bias(X_tr).T  #adding bias to training labels , and transposing to reflect the theory. Normaling pixels 
         self.ytr = self.create_labels(ytr)
-        self.X_te = self.add_bias(X_te).T /255 #adding bias to testing labels , and transposing to reflect the theory . Normalizing pixels 
+        self.X_te = self.add_bias(X_te).T  #adding bias to testing labels , and transposing to reflect the theory 
         self.yte = self.create_labels(yte) 
         self.H = np.array(np.meshgrid(n,epsilon,epochs,alpha)).T.reshape(-1,4) #creating combination of all the hyper parameters 
         self.validation_split = validation_split
 
-        # print(X_tr.shape)
-        
         pass
     def add_bias(self,X):
         #adding a bias term for the Train and test labels 
@@ -37,7 +38,8 @@ class SMR:
 
     def softmax(self,z):
         exp = np.exp(z) 
-        return exp /np.sum(exp)
+        return exp /np.sum(exp,axis=1,keepdims=1)
+        
     def predict(self,X,y,w):
         z = X.T@w 
         # print("Z" , z)
@@ -63,11 +65,8 @@ class SMR:
         y = y[n_:n+n_]
         # Compute gradient on this batch 
         gradient = self.gradient(X,y,w,alpha)
-        # print(gradient)
-        # input()
-        # Update weights 
+        # update weights
         w =  w - epsilon*gradient 
-        # Increment the batch start point 
         n_+=n
         return w, n_
 
@@ -80,7 +79,7 @@ class SMR:
         for h in self.H: # for each hyper parameter set 
             n,epsilon,epochs ,alpha =h
             print(f'Using hyper parameters Batch Size = {n}, Epsilon = {epsilon}, epochs = {epochs}, alpha = {alpha}')
-            w = np.zeros((self.X_tr.shape[0],self.c))#np.random.uniform( size=(self.X_tr.shape[0],self.c))#initialize the weights with bias term  #
+            w = np.random.uniform( size=(self.X_tr.shape[0],self.c))#initialize the weights with bias term  #np.zeros((self.X_tr.shape[0],self.c))#
             n = int(n) 
             epochs = int(epochs) 
             for epoch in range(epochs):
