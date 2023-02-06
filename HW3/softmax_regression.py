@@ -1,11 +1,11 @@
 import numpy as np 
 import pickle 
 class SMR:
-    def __init__(self,X_tr,ytr,X_te,yte,c =10,n=[1000,2000,4000],epsilon=[0.01,0.1,0.1,0.2],epochs=[2,4,6],alpha=[1,5,10,20],validation_split =0.8) -> None:
+    def __init__(self,X_tr,ytr,X_te,yte,c =10,n=[200,300,2000],epsilon=[0.01,0.1],epochs=[200,300],alpha=[0.001,0.01,0.1],validation_split =0.8) -> None:
         self.c = c #c classes  
         X_tr = X_tr/255 # Normalizing pixels 
         X_te = X_te/255  #Normalizing pixels 
-        
+
         self.X_tr = self.add_bias(X_tr).T  #adding bias to training labels , and transposing to reflect the theory. Normaling pixels 
         self.ytr = self.create_labels(ytr)
         self.X_te = self.add_bias(X_te).T  #adding bias to testing labels , and transposing to reflect the theory 
@@ -51,13 +51,16 @@ class SMR:
         y_tilde = self.predict(X,y,w)
         n = y.shape[0]
         return (1/n)*X@(y_tilde-y) + alpha*w 
-    def CE_loss(self,X,y,w,alpha):
+    def CE_loss(self,X,y,w,alpha,regularize=True):
         # log = np.log(y_tilde)
-        w_temp = w[:-1,:] #to not reg the bias 
-        reg = np.sum(w_temp.T@w_temp,axis=0)
         n = y.shape[0]
         y_tilde = self.predict(X,y,w)
-        return -(1/n)*np.sum(np.sum(y*np.log(y_tilde),axis=0) + 0.5*alpha*reg)
+        if regularize:
+            w_temp = w[:-1,:] #to not reg the bias 
+            reg = np.sum(w_temp.T@w_temp,axis=0)
+            return -(1/n)*np.sum(np.sum(y*np.log(y_tilde),axis=0)+ 0.5*alpha*reg)
+        else:
+            return -(1/n)*np.sum(np.sum(y*np.log(y_tilde),axis=0))
 
     def train_batch(self,X,y,w,alpha,epsilon,n,n_):
         # Split the batch 
@@ -106,8 +109,8 @@ class SMR:
             n_ = 0 
             while n_ < len(self.ytr):
                 w,n_ = self.train_batch(self.X_tr,self.ytr,w,alpha,epsilon,n,n_)        
-        train_err = self.CE_loss(self.X_tr,self.ytr,w,alpha)
-        test_err = self.CE_loss(self.X_te,self.yte,w,alpha)
+        train_err = self.CE_loss(self.X_tr,self.ytr,w,alpha,regularize=False)
+        test_err = self.CE_loss(self.X_te,self.yte,w,alpha,regularize=False)
         return w,train_err , test_err , h_star
 
 def main():

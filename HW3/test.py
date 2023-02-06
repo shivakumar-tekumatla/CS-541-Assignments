@@ -49,7 +49,8 @@ for i in range(10):
 
 plt.imshow(out,cmap="gray")
 plt.show()
-i+=1
+
+print(loaded_model[-1,:])
 
 
 
