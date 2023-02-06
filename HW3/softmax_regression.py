@@ -1,7 +1,7 @@
 import numpy as np 
 import pickle 
 class SMR:
-    def __init__(self,X_tr,ytr,X_te,yte,c =10,n=[200,300,2000],epsilon=[0.01,0.1],epochs=[200,300],alpha=[0.001,0.01,0.1],validation_split =0.8) -> None:
+    def __init__(self,X_tr,ytr,X_te,yte,c =10,n=[200,300],epsilon=[0.01,0.1],epochs=[200,300],alpha=[0.001,0.01],validation_split =0.8) -> None:#n=[200,300,2000],epsilon=[0.01,0.1],epochs=[200,300],alpha=[0.001,0.01,0.1],validation_split =0.8) -> None:
         self.c = c #c classes  
         X_tr = X_tr/255 # Normalizing pixels 
         X_te = X_te/255  #Normalizing pixels 
@@ -45,12 +45,15 @@ class SMR:
         # print("Z" , z)
         y_tilde = self.softmax(z)
         return y_tilde
-    def gradient(self,X,y,w,alpha):
-        alpha = np.full(w.shape,alpha)  # generating alpha same as weights shape 
-        alpha[-1,:] = 0 #set all the bias reg to zero 
+    def gradient(self,X,y,w,alpha,regularize):
         y_tilde = self.predict(X,y,w)
         n = y.shape[0]
-        return (1/n)*X@(y_tilde-y) + alpha*w 
+        if regularize:
+            alpha = np.full(w.shape,alpha)  # generating alpha same as weights shape 
+            alpha[-1,:] = 0 #set all the bias reg to zero 
+            return (1/n)*X@(y_tilde-y) + alpha*w 
+        else:
+            return (1/n)*X@(y_tilde-y) 
     def CE_loss(self,X,y,w,alpha,regularize=True):
         # log = np.log(y_tilde)
         n = y.shape[0]
@@ -62,12 +65,12 @@ class SMR:
         else:
             return -(1/n)*np.sum(np.sum(y*np.log(y_tilde),axis=0))
 
-    def train_batch(self,X,y,w,alpha,epsilon,n,n_):
+    def train_batch(self,X,y,w,alpha,epsilon,n,n_,regularize=True):
         # Split the batch 
         X = X[:,n_:n+n_]
         y = y[n_:n+n_]
         # Compute gradient on this batch 
-        gradient = self.gradient(X,y,w,alpha)
+        gradient = self.gradient(X,y,w,alpha,regularize)
         # update weights
         w =  w - epsilon*gradient 
         n_+=n
@@ -88,10 +91,10 @@ class SMR:
             for epoch in range(epochs):
                 n_ = 0 
                 while n_ < len(ytr):
-                    w,n_ = self.train_batch(X_tr,ytr,w,alpha,epsilon,n,n_) #Train on the batch
+                    w,n_ = self.train_batch(X_tr,ytr,w,alpha,epsilon,n,n_,regularize=False) #Train on the batch
                     # print(w)
         #     # test on validation data set 
-            curr_err = self.CE_loss(X_va,yva,w,alpha)
+            curr_err = self.CE_loss(X_va,yva,w,alpha,regularize=False)
             print("Error: ", curr_err) #, h)
             if curr_err <err:
                 h_star = h  #storing as the best hyper parameter set 
