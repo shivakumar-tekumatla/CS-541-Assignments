@@ -5,14 +5,12 @@ class SMR:
         self.c = c #c classes  
         X_tr = X_tr/255 # Normalizing pixels 
         X_te = X_te/255  #Normalizing pixels 
-
         self.X_tr = self.add_bias(X_tr).T  #adding bias to training labels , and transposing to reflect the theory. Normaling pixels 
         self.ytr = self.create_labels(ytr)
         self.X_te = self.add_bias(X_te).T  #adding bias to testing labels , and transposing to reflect the theory 
         self.yte = self.create_labels(yte) 
         self.H = np.array(np.meshgrid(n,epsilon,epochs,alpha)).T.reshape(-1,4) #creating combination of all the hyper parameters 
         self.validation_split = validation_split
-
         pass
     def add_bias(self,X):
         #adding a bias term for the Train and test labels 
@@ -75,7 +73,6 @@ class SMR:
         w =  w - epsilon*gradient 
         n_+=n
         return w, n_
-
 
     def stochastic_gradient_descent(self):
         X_tr,ytr,X_va,yva = self.split_train_validation(self.validation_split) # Split train to train and validation  
