@@ -6,7 +6,7 @@ import pickle
 
 class HyperParameter:
     def __init__(self,h) -> None:
-        self.no_hidden_layers,self.no_hidden_units,self.n,self.epsilon,self.epochs,self.alpha = h
+        self.no_hidden_layers,self.no_hidden_units,self.n,self.epsilon,self.epochs,self.alpha,self.decay_factor,self.decay_frequency = h
         self.no_hidden_layers = int(self.no_hidden_layers)
         self.no_hidden_units = self.no_hidden_layers*[int(self.no_hidden_units)]
         self.n = int(self.n)
@@ -168,7 +168,7 @@ class DNN:
         if regularize:
             # regularizing only w.r.t weights 
             w = np.hstack([ W.flatten() for W in Ws ])
-            return unreg_ce -(1/n)*(0.5*h.alpha*np.sum(np.square(w))),y_tilde 
+            return unreg_ce +(1/n)*(0.5*h.alpha*np.sum(np.square(w))),y_tilde 
         return unreg_ce,y_tilde 
 
     def forward_propagation(self,X,y,Ws,bs):
@@ -231,6 +231,8 @@ class DNN:
                 y = ytr[n_:h.n+n_]
                 Ws,bs = self.update_weights(X,y,Ws,bs,h,regularize)
                 n_+=h.n
+            print(f"Epoch {epoch+1} , and loss {self.fCE(X,y,Ws,bs,h,regularize)[0]}")
+
         fCE = self.fCE(X,y,Ws,bs,h,regularize)[0] #get only train error 
         return Ws,bs,fCE
 
@@ -262,19 +264,20 @@ class DNN:
         return h_star # we got the best hyper parameters . Now train using these parameters on the whole data 
     def show_weights(self,Ws):
         def multiples(i):
+            # finding the factors of i with least sum. 
+            # this helps us in reshaping the weights properly if there is no integer sqrt of a number 
             for k in range(math.ceil(math.sqrt(i)), 0, -1): 
-                # finding the factors of i with least sum. 
-                # this helps us in reshaping the weights properly if there is no integer sqrt of a number 
                 if i % k == 0:
                     m1, m2 =k,int(i / k) 
                     return m1,m2 
 
-        # W = W.T 
         for layer,W in enumerate(Ws):
             i,j = W.shape 
+            print(i,j)
             m1,m2 = multiples(i) 
             n1,n2 = multiples(j)
             # n = int(j ** 0.5)
+            # n1 = n2 = n
             plt.title(f"Weights at Layer:{layer+1}")
             plt.imshow(np.vstack([np.hstack([ np.pad(np.reshape(W[:,idx1*n1 + idx2],[ m1,m2]), 2, mode='constant') for idx2 in range(n2) ]) for idx1 in range(n1)]), cmap='gray')
             plt.show()
@@ -282,19 +285,14 @@ class DNN:
         weights = self.pack(Ws,bs)
         def function(X,y,weights):
             Ws,bs = self.unpack(weights,h)
-            print("In f")
             return self.fCE(X,y,Ws,bs,h,False)[0]
         def function_prime(X,y,weights):
-            print("in f p")
             Ws,bs = self.unpack(weights,h)
             dJdWs,dJdbs = self.backward_propagation(X,y,Ws,bs,h,regularize = False)
             return self.pack(dJdWs,dJdbs)
         f = lambda wab:function(X,y,wab)
         f_prime = lambda wab:function_prime(X,y,wab)
-        print(f(weights),f_prime(weights))
-        # print(scipy.optimize.approx_fprime(weights, f, 1e-6))
-        # print(scipy.optimize.approx_fprime(weights, lambda weights_: function(X,y,weights_), 1e-6))
-        # # scipy.optimize.approx_fprime()
+        print("Approx f prime   :",scipy.optimize.approx_fprime(weights, lambda weights_: function(X,y,weights_), 1e-6))
         return scipy.optimize.check_grad(f,f_prime,weights)
 
 def main():
@@ -303,33 +301,25 @@ def main():
     X_te = np.reshape(np.load("../HW3/Data/fashion_mnist_test_images.npy"), (-1, 28*28))
     yte = np.load("../HW3/Data/fashion_mnist_test_labels.npy")
     hidden_layers=[6]
-    hidden_units=[128]
+    hidden_units=[254]
     epsilon=[0.09]
-    n=[128]
-    epochs=[10,20]
+    n=[254]
+    epochs=[200]
     alpha=[0.0025]
-    H= list(map(HyperParameter,np.array(np.meshgrid(hidden_layers,hidden_units,n,epsilon,epochs,alpha)).T.reshape(-1,6))) #creating combination of all the hyper parameters #creating combination of all the hyper parameters 
+    decay_factor = [1]
+    decay_frequency = [1] # times per batch 
+    H= list(map(HyperParameter,np.array(np.meshgrid(hidden_layers,hidden_units,n,epsilon,epochs,alpha,decay_factor,decay_frequency)).T.reshape(-1,8))) #creating combination of all the hyper parameters #creating combination of all the hyper parameters 
     dnn = DNN(X_tr,ytr,X_te,yte,H,tune=False)
-    # print(dnn.X_tr[:,0:1].shape)
-    # print(dnn.ytr[0:1,:].shape)
-    # # h = dnn.H[0]#dnn.tune()
     print("Found the best hyper parameter set " , dnn.h_star)
     Ws,bs,train_error = dnn.train(dnn.X_tr,dnn.ytr,dnn.h_star)
-    # pickle.dump((Ws,bs), open("model.sav", 'wb'))
-
+    pickle.dump((Ws,bs), open("model.sav", 'wb'))
     print("Training Error is " ,train_error)
-
     test_error,test_Acc = dnn.test(Ws,bs,dnn.h_star)
     print("Test Error is ",test_error)
     print("Test accuracy",test_Acc)
-    # # for i in range(4):
     # Ws,bs = pickle.load(open("model.sav", 'rb'))
     dnn.show_weights(Ws)#[i])#,128)
-    # print(dnn.X_tr[:,0:1].shape,dnn.ytr[0:1,:].shape)
-    
-    # print(dnn.check_grad(dnn.X_tr[:,0:1],dnn.ytr[0:1,:],dnn.h_star,Ws,bs))
-    # print(dnn.check_grad(dnn.X_tr[:,0:5],dnn.ytr[0:5,:],dnn.h_star,Ws,bs))
-#
+    # print("Check grad : ",dnn.check_grad(dnn.X_tr[:,0:1],dnn.ytr[0:1,:],dnn.h_star,Ws,bs))
 
 
 if __name__=="__main__":
