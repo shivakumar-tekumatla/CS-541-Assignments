@@ -300,11 +300,11 @@ def main():
     ytr = np.load("../HW3/Data/fashion_mnist_train_labels.npy") 
     X_te = np.reshape(np.load("../HW3/Data/fashion_mnist_test_images.npy"), (-1, 28*28))
     yte = np.load("../HW3/Data/fashion_mnist_test_labels.npy")
-    hidden_layers=[7]
+    hidden_layers=[0]
     hidden_units=[512]
     epsilon=[0.09]
     n=[254]
-    epochs=[300]
+    epochs=[1]
     alpha=[0.0025]
     decay_factor = [1]
     decay_frequency = [1] # times per batch 
